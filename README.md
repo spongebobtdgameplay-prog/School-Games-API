@@ -1,21 +1,29 @@
-# School Games API
+# School Games API — local integration test
 
-A responsive website for school-game tips and small helpers.
+This repo contains a static frontend and a small local mock API for testing form state, JSON requests, and HTTP error handling. The frontend does not call the live Kahoot bot endpoint.
+
+## Run locally
+
+Requires Node.js 18+.
+
+1. In a terminal, run `node mock-api/server.js`.
+2. Open `http://localhost:3001` in your browser.
+3. Submit the Game PIN, nickname, and amount. The form sends JSON to `POST /api/session-check`.
+
+The mock API accepts `{ "pin": "123456", "name": "Demo", "amount": 1 }`. It returns:
+- `200` for valid sample fields
+- `400` when required fields are missing or the amount is outside 1–25
+- `404` when the PIN is `404` or the name is `taken`
+
+These predictable cases make it possible to test the UI's success and error states without contacting a live game service.
 
 ## Files
 
-- `index.html` — main page, featured tool, and guide section
-- `styles.css` — responsive layout and visual design
-- `app.js` — menu toggle and local form validation
+- `index.html` — page structure
+- `styles.css` — responsive styling
+- `app.js` — form validation, fetch call, and response/error rendering
+- `mock-api/server.js` — local mock API and static-file server
 
-## First feature
+## Optional API base
 
-The featured Kahoot helper accepts a game PIN, display name, and amount (1–25). It validates the fields locally and displays a setup preview. It does not contact Kahoot or add participants. The official join page is linked from the form.
-
-## Run
-
-Open `index.html` in a browser. The site uses plain HTML, CSS, and JavaScript and needs no build step.
-
-## GitHub Pages
-
-To publish it, open the repository's **Settings → Pages**, choose the `main` branch and `/(root)`, and save.
+The frontend uses `http://localhost:3001` by default. For a different local test server, set `window.SCHOOL_GAMES_API_BASE` before loading `app.js`.
