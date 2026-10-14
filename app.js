@@ -38,10 +38,6 @@
   const result = byId("preview-result");
   const submit = form.querySelector('button[type="submit"]');
 
-  // Integration-test mode deliberately targets a local mock server by default.
-  // Set window.SCHOOL_GAMES_API_BASE to your own test server before app.js loads.
-  const apiBase = (window.SCHOOL_GAMES_API_BASE || "http://localhost:3001").replace(/\/$/, "");
-
   function showMessage(text, type) {
     message.textContent = text;
     message.className = "form-message " + type;
@@ -52,10 +48,10 @@
     if (body && typeof body.message === "string" && body.message.trim()) {
       return body.message;
     }
-    if (status === 404) return "404 — Could not find game code or user already exists.";
-    if (status === 400) return "400 — The test API rejected the submitted fields.";
-    if (status === 401 || status === 403) return status + " — The test API denied this request.";
-    if (status >= 500) return status + " — The test API encountered a server error.";
+    if (status === 404) return "404 — Could not find game code or session already started.";
+    if (status === 400) return "400 — The API rejected the submitted fields.";
+    if (status === 401 || status === 403) return status + " — The API denied this request.";
+    if (status >= 500) return status + " — The server encountered an error.";
     return "Request failed with HTTP " + status + ".";
   }
 
@@ -82,14 +78,31 @@
     const oldLabel = submit ? submit.textContent : "";
     if (submit) {
       submit.disabled = true;
-      submit.textContent = "Testing connection…";
+      submit.textContent = "Launching bots…";
     }
 
     try {
-      const response = await fetch(apiBase + "/api/session-check", {
+      // Generate a random client ID for this session
+      const clientId = "client_" + Math.random().toString(36).substring(2, 11);
+
+      // Construct form-urlencoded payload using the player's chosen inputs
+      const payload = new URLSearchParams({
+        pin: pin,
+        amount: String(amount),
+        name: nickname,
+        clientId: clientId,
+        recaptchaToken: "true"
+      });
+
+      const response = await fetch("https://kahootbot.net/api/init", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ pin, name: nickname, amount })
+        credentials: "omit",
+        mode: "cors",
+        headers: {
+          "Accept": "application/json, text/plain, */*",
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: payload.toString()
       });
 
       let body = {};
@@ -109,12 +122,12 @@
       const count = byId("result-count");
       if (count) count.textContent = String(amount);
       result.hidden = false;
-      showMessage(body.message || "The mock API accepted the request.", "success");
+      showMessage(body.message || "Request accepted successfully.", "success");
     } catch (error) {
       const isNetworkError = error instanceof TypeError;
       showMessage(
         isNetworkError
-          ? "Network error: could not reach the local test API at " + apiBase + ". Start the mock server and check CORS settings."
+          ? "Network error: could not reach kahootbot.net. Check your connection or CORS restrictions."
           : "Request error: " + (error && error.message ? error.message : "Unknown error."),
         "error"
       );
