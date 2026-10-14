@@ -38,7 +38,7 @@
       const count = Number(amount.value);
 
       if (!gamePin || !nickname) {
-        message.textContent = "Could not find game code or user already exists.";
+        message.textContent = "Enter both a game PIN and a display name.";
         message.classList.add("error");
         message.hidden = false;
         (!gamePin ? pin : name).focus();
